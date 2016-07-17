@@ -1,0 +1,5 @@
+---
+- name: Include hostname.yml
+  include: hostname.yml
+  tags:
+    - hostname

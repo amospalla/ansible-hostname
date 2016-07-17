@@ -1,0 +1,55 @@
+---
+- name: Get short hostname
+  set_fact:
+    amospalla_hostname_short: '{% if hostname_custom_short is defined %}{{ hostname_custom_short }}{% else %}{% set amospalla_hostname_list = inventory_hostname.split(".") %}{{ amospalla_hostname_list|first }}{% endif %}'
+
+- name: Get fqdn
+  set_fact:
+    amospalla_fqdn: '{% if hostname_custom is defined %}{{ hostname_custom }}{% else %}{{ inventory_hostname }}{% endif %}'
+
+- name: Set hostname
+  hostname:
+    name: '{{ amospalla_hostname_short }}'
+
+- name: Ensure /etc/hostname is correct (bug in hostname module?)
+  lineinfile:
+    state: present
+    dest: /etc/hostname
+    owner: root
+    group: root
+    mode: "0644"
+    regexp: '.*'
+    line: '{{ amospalla_hostname_short }}'
+  when: ansible_os_family in ['RedHat']
+
+- name: Set /etc/hosts according to hostname
+  lineinfile:
+    state: present
+    dest: /etc/hosts
+    regexp: '^127.0.0.1\s+.*'
+    line: '127.0.0.1 localhost {{ amospalla_fqdn }} {{ amospalla_hostname_short }}'
+  when: ansible_distribution not in ['Ubuntu']
+
+- name: Set /etc/sysconfig/network hostname
+  lineinfile:
+    state: present
+    dest: /etc/sysconfig/network
+    regexp: '^HOSTNAME=.*'
+    line: 'HOSTNAME={{ amospalla_fqdn }}'
+  when: ansible_os_family in ['RedHat']
+
+- name: Set /etc/hosts 127.0.0.1
+  lineinfile:
+    state: present
+    dest: /etc/hosts
+    regexp: '^127.0.0.1\s+.*'
+    line: '127.0.0.1 localhost'
+  when: ansible_distribution in ['Ubuntu']
+
+- name: Set /etc/hosts 127.0.1.1 according to hostname
+  lineinfile:
+    state: present
+    dest: /etc/hosts
+    line: '127.0.1.1 {{ amospalla_fqdn }} {{ amospalla_hostname_short }}'
+    regexp: '^127.0.1.1\s+.*'
+  when: ansible_distribution in ['Ubuntu']
