@@ -27,7 +27,7 @@
     state: present
     dest: /etc/hosts
     regexp: '^127.0.0.1\s+.*'
-    line: '127.0.0.1 localhost {{ amospalla_fqdn }} {{ amospalla_hostname_short }}'
+    line: '127.0.0.1 {{ amospalla_fqdn }} {{ amospalla_hostname_short }} localhost'
   when: ansible_distribution not in ['Ubuntu']
 
 - name: Set /etc/sysconfig/network hostname
